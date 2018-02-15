@@ -1,6 +1,12 @@
 #Optparse
 A BASH wrapper for getopts and compgen, for simple command-line argument parsing an bash completion.
 
+### ( ! ) ATTENTION MAC USERS
+Optparse requires `gnu-sed` instead of the default Mac version of sed, which you can do with the following:
+```
+brew install gnu-sed --with-default-names
+```
+
 ##What is this?
 A wrapper that provides a clean and easy way to parse arguments and create Tab completion to your BASH scripts. You could also create wrappers for linux commands. It let you define short and long option names, handle flag variables, set default values for optional arguments and an optional list of posible values for options to complete, all while aiming to be as minimal as possible: *One line per argument definition*.
 
