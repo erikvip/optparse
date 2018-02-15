@@ -1,0 +1,158 @@
+function usage(){
+cat << XXX
+usage: $0 [OPTIONS]
+
+OPTIONS:
+        
+	-r --recursive:              Turn on recursive retrieving. [default:false]
+	-c --continue:               Resume getting a partially-downloaded file. [default:false]
+	-o --no-directories:         Do not preserve directory hierarchy [default:false]
+	-h --no-host-directories:    Disable generation of host-prefixed directories [default:false]
+	-n --no-parent:              Do not ever ascend to the parent directory [default:false]
+	-x --directory-prefix:       Destination directory to save all files
+	-d --progress:               Progress indicator you wish to use.
+	-U --user-agent:             Identify as agent-string to the HTTP server.
+	-i --cut-dirs:               Ignore number remote directory components.
+	-u --user:                   User to use
+	-p --password:               User password.
+
+        -? --help  :  usage
+
+XXX
+}
+
+# Contract long options into short options
+params=""
+while [ $# -ne 0 ]; do
+        param="$1"
+        shift
+
+        case "$param" in
+                
+		--recursive)
+			params="$params -r";;
+		--recursive=*)
+			params="$params -r=${param#*=}";;
+		--continue)
+			params="$params -c";;
+		--continue=*)
+			params="$params -c=${param#*=}";;
+		--no-directories)
+			params="$params -o";;
+		--no-directories=*)
+			params="$params -o=${param#*=}";;
+		--no-host-directories)
+			params="$params -h";;
+		--no-host-directories=*)
+			params="$params -h=${param#*=}";;
+		--no-parent)
+			params="$params -n";;
+		--no-parent=*)
+			params="$params -n=${param#*=}";;
+		--directory-prefix)
+			params="$params -x";;
+		--directory-prefix=*)
+			params="$params -x=${param#*=}";;
+		--progress)
+			params="$params -d";;
+		--progress=*)
+			params="$params -d=${param#*=}";;
+		--user-agent)
+			params="$params -U";;
+		--user-agent=*)
+			params="$params -U=${param#*=}";;
+		--cut-dirs)
+			params="$params -i";;
+		--cut-dirs=*)
+			params="$params -i=${param#*=}";;
+		--user)
+			params="$params -u";;
+		--user=*)
+			params="$params -u=${param#*=}";;
+		--password)
+			params="$params -p";;
+		--password=*)
+			params="$params -p=${param#*=}";;
+                "-?"|--help)
+                        usage
+                        exit 0;;
+                *)
+                        if [[ "$param" == --* ]]; then
+                                echo -e "Unrecognized long option: $param"
+                                usage
+                                exit 1
+                        fi
+                        params="$params \"$param\"";;
+        esac
+done
+
+eval set -- "$params"
+
+# Set default variable values
+
+recursive=false
+continue=false
+no_dirs=false
+no_host_dirs=false
+no_parent=false
+
+# Get required options and parameters
+required_short_options="-r -n -x"
+required_long_options="--recursive --no-parent --directory-prefix"
+
+# Create an associative array with with short options as keys and long options as values
+declare -A hash_options=([-r]=--recursive [-c]=--continue [-o]=--no-directories [-h]=--no-host-directories [-n]=--no-parent [-x]=--directory-prefix [-d]=--progress [-U]=--user-agent [-i]=--cut-dirs [-u]=--user [-p]=--password )
+
+# Process using getopts 
+while getopts "rcohnx:d:U:i:u:p:" option; do
+        # Return error when argument is an option of type Ex: --option or --option=xxxxx
+        [[ -n "$OPTARG" ]] && [[ "${required_short_options}" == *"${OPTARG/=*/}"* ]] && echo "Invalid parameter: ${hash_options["${OPTARG/=*/}"]}"=${OPTARG#*=} && usage
+        case $option in
+                # Substitute actions for different variables
+                
+		r)
+			recursive="true"
+			$(grep -q '^=' <<< "$OPTARG") && hash_options[-r"$OPTARG"]=--recursive"$OPTARG";;
+		c)
+			continue="true"
+			$(grep -q '^=' <<< "$OPTARG") && hash_options[-c"$OPTARG"]=--continue"$OPTARG";;
+		o)
+			no_dirs="true"
+			$(grep -q '^=' <<< "$OPTARG") && hash_options[-o"$OPTARG"]=--no-directories"$OPTARG";;
+		h)
+			no_host_dirs="true"
+			$(grep -q '^=' <<< "$OPTARG") && hash_options[-h"$OPTARG"]=--no-host-directories"$OPTARG";;
+		n)
+			no_parent="true"
+			$(grep -q '^=' <<< "$OPTARG") && hash_options[-n"$OPTARG"]=--no-parent"$OPTARG";;
+		x)
+			directory="$OPTARG"
+			$(grep -q '^=' <<< "$OPTARG") && hash_options[-x"$OPTARG"]=--directory-prefix"$OPTARG";;
+		d)
+			progress="$OPTARG"
+			$(grep -q '^=' <<< "$OPTARG") && hash_options[-d"$OPTARG"]=--progress"$OPTARG";;
+		U)
+			agent="$OPTARG"
+			$(grep -q '^=' <<< "$OPTARG") && hash_options[-U"$OPTARG"]=--user-agent"$OPTARG";;
+		i)
+			ignore_dirs="$OPTARG"
+			$(grep -q '^=' <<< "$OPTARG") && hash_options[-i"$OPTARG"]=--cut-dirs"$OPTARG";;
+		u)
+			user="$OPTARG"
+			$(grep -q '^=' <<< "$OPTARG") && hash_options[-u"$OPTARG"]=--user"$OPTARG";;
+		p)
+			password="$OPTARG"
+			$(grep -q '^=' <<< "$OPTARG") && hash_options[-p"$OPTARG"]=--password"$OPTARG";;
+                :)
+                        echo "Option - $OPTARG requires an argument"
+                        exit 1;;
+                *)      
+                        echo "Unknown option: $option"
+                        usage
+                        exit 1;;
+        esac
+done
+
+# Clean up after self
+[[ -z "wget_dir.sh" ]] && rm wget_dir.sh_optparse
+

@@ -1,0 +1,98 @@
+function usage(){
+cat << XXX
+usage: $0 [OPTIONS]
+
+OPTIONS:
+        
+	-n --name:                   The event name
+	-s --say-hello:              Say Hello [default:false]
+	-c --country:                The event country
+	-y --year:                   The event year
+
+        -? --help  :  usage
+
+XXX
+}
+
+# Contract long options into short options
+params=""
+while [ $# -ne 0 ]; do
+        param="$1"
+        shift
+
+        case "$param" in
+                
+		--name)
+			params="$params -n";;
+		--name=*)
+			params="$params -n=${param#*=}";;
+		--say-hello)
+			params="$params -s";;
+		--say-hello=*)
+			params="$params -s=${param#*=}";;
+		--country)
+			params="$params -c";;
+		--country=*)
+			params="$params -c=${param#*=}";;
+		--year)
+			params="$params -y";;
+		--year=*)
+			params="$params -y=${param#*=}";;
+                "-?"|--help)
+                        usage
+                        exit 0;;
+                *)
+                        if [[ "$param" == --* ]]; then
+                                echo -e "Unrecognized long option: $param"
+                                usage
+                                exit 1
+                        fi
+                        params="$params \"$param\"";;
+        esac
+done
+
+eval set -- "$params"
+
+# Set default variable values
+
+say_hello=false
+
+# Get required options and parameters
+required_short_options="-y"
+required_long_options="--year"
+
+# Create an associative array with with short options as keys and long options as values
+declare -A hash_options=([-n]=--name [-s]=--say-hello [-c]=--country [-y]=--year )
+
+# Process using getopts 
+while getopts "n:sc:y:" option; do
+        # Return error when argument is an option of type Ex: --option or --option=xxxxx
+        [[ -n "$OPTARG" ]] && [[ "${required_short_options}" == *"${OPTARG/=*/}"* ]] && echo "Invalid parameter: ${hash_options["${OPTARG/=*/}"]}"=${OPTARG#*=} && usage
+        case $option in
+                # Substitute actions for different variables
+                
+		n)
+			name="$OPTARG"
+			$(grep -q '^=' <<< "$OPTARG") && hash_options[-n"$OPTARG"]=--name"$OPTARG";;
+		s)
+			say_hello="true"
+			$(grep -q '^=' <<< "$OPTARG") && hash_options[-s"$OPTARG"]=--say-hello"$OPTARG";;
+		c)
+			country="$OPTARG"
+			$(grep -q '^=' <<< "$OPTARG") && hash_options[-c"$OPTARG"]=--country"$OPTARG";;
+		y)
+			year="$OPTARG"
+			$(grep -q '^=' <<< "$OPTARG") && hash_options[-y"$OPTARG"]=--year"$OPTARG";;
+                :)
+                        echo "Option - $OPTARG requires an argument"
+                        exit 1;;
+                *)      
+                        echo "Unknown option: $option"
+                        usage
+                        exit 1;;
+        esac
+done
+
+# Clean up after self
+[[ -z "sample_event.sh" ]] && rm sample_event.sh_optparse
+

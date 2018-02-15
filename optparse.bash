@@ -61,6 +61,14 @@ function optparse.define(){
                 fi
         done
 
+        local file="${file:-}";
+        local default="${default:-}";
+        local list="${list:-}";
+        local val="${val:-}";
+        local required="${required:-}";
+        local short="${short:-}";
+        local shortname="${shortname:-}";
+
         if [ "$variable" = "" ]; then
                 optparse.throw_error "You must give a variable for option: ($short/$long)"
         fi
@@ -105,8 +113,9 @@ function optparse.define(){
 
 # -----------------------------------------------------------------------------------------------------------------------------
 function optparse.build(){
-        local script=$1
-        local completion_dir=$2
+        local script="${1:-}";
+        local completion_dir="${2:-}";
+        completion_file=""
         if [[ -z "$script" ]]; then
             build_file="/tmp/optparse-${RANDOM}.tmp"
         else

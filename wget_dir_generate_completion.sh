@@ -1,4 +1,7 @@
-#!/usr/bin/env bash
+#!/bin/bash 
+
+set -o nounset  # Fail when access undefined variable
+set -o errexit  # Exit when a command fails
 
 # Source the optparse.bash file ---------------------------------------------------
 source optparse.bash
